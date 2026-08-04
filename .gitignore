@@ -1,0 +1,43 @@
+# ============================================================
+# MedTrust - Git Ignore
+# ============================================================
+
+# NIH ChestX-ray14 image dataset
+dataset/images/
+
+# Model checkpoints / trained weights
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Generated outputs / caches
+outputs/
+cache/
+embeddings/
+reports/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dataset download/cache artifacts
+dataset/dummy/
+*.tar
+*.tar.gz
+*.tgz
