@@ -98,6 +98,16 @@ def main():
         ),
     )
 
+    parser.add_argument(
+        "--patient-folder",
+        type=str,
+        default=None,
+        help=(
+            "Optional patient folder name for organizing "
+            "Grad-CAM outputs, e.g. patient_1."
+        ),
+    )
+
     args = parser.parse_args()
 
     image_path = Path(args.image)
@@ -307,7 +317,15 @@ def main():
     # Save figure
     # -----------------------------------------------------
 
-    OUTPUT_DIR.mkdir(
+    if args.patient_folder:
+        output_dir = (
+            OUTPUT_DIR
+            / args.patient_folder
+        )
+    else:
+        output_dir = OUTPUT_DIR
+
+    output_dir.mkdir(
         parents=True,
         exist_ok=True,
     )
@@ -319,7 +337,7 @@ def main():
     )
 
     output_path = (
-        OUTPUT_DIR
+        output_dir
         / (
             f"{image_path.stem}"
             f"__{safe_class_name}"
