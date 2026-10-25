@@ -41,3 +41,16 @@ dataset/dummy/
 *.tar
 *.tar.gz
 *.tgz
+
+# Database, backups & local environment
+*.db
+*.db-wal
+*.db-shm
+backup/
+.env
+.env.local
+
+# Node & Frontend build
+node_modules/
+frontend/node_modules/
+frontend/dist/

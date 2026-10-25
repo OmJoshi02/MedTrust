@@ -1,0 +1,50 @@
+{
+  "checkpoint": {
+    "path": "checkpoints/best_model.pt",
+    "sha256": "6160588028dad6ce5396c74962c7d85b162d06b816f34175249fa069c8466d34",
+    "size": 84542751,
+    "exists": true
+  },
+  "thresholds": {
+    "path": "outputs/evaluation/thresholds.json",
+    "sha256": "2c33facd3e84415dcd4fb5bce7d30261a94ff733f4dd796d32fae072f80ef7bb",
+    "size": 3720,
+    "exists": true
+  },
+  "temperature": {
+    "path": "outputs/calibration/temperature.json",
+    "sha256": "58319f56b3704daf25267cc189b17aa169e242d8baa7f9fbd5d6de8d34a62a29",
+    "size": 3882,
+    "exists": true
+  },
+  "reliability_bins": {
+    "path": "outputs/calibration/reliability/validation_reliability_bins.csv",
+    "sha256": "20ca8d32d3a795071128bfa41205a83c56aaa53ab6341f71387023b81db2c204",
+    "size": 43127,
+    "exists": true
+  },
+  "quality_reference": {
+    "path": "outputs/quality/quality_reference.json",
+    "sha256": "b4ea572823fa28fc5fb6ade9d824a171d7263f494eed6e835a80303776510cd3",
+    "size": 387,
+    "exists": true
+  },
+  "train_list": {
+    "path": "splits/train_list.txt",
+    "sha256": "08aa1963b575f5b67a70261e8556c04e15e9e09ab01619203b2ce98ac3e17c52",
+    "size": 1334279,
+    "exists": true
+  },
+  "val_list": {
+    "path": "splits/val_list.txt",
+    "sha256": "f912978bc73efd87eea0f5a37c24b0ee2de3900947490a729767c3a9f8145799",
+    "size": 286076,
+    "exists": true
+  },
+  "test_list": {
+    "path": "splits/test_list.txt",
+    "sha256": "ba3a4e5b9d337c2c9577f0a717adddfd109a62a44702700739a0a6d8caa4e3b4",
+    "size": 285685,
+    "exists": true
+  }
+}

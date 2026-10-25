@@ -1,0 +1,464 @@
+<USER_REQUEST>
+# MedTrust — Similarity Analyzer V2: Comprehensive Independent Evaluation & Test Audit
+
+## Role
+
+Act as a senior ML validation engineer, Python test engineer, backend API auditor, frontend QA engineer, and medical AI evaluation specialist.
+
+Your task is to **independently evaluate every testable component of the completed Similarity Analyzer V2**, verify the previous implementation report against actual code and execution results, and produce a reproducible evaluation report.
+
+Do not assume the previous report is correct merely because it claims all tests passed. Inspect the repository, execute the available tests, independently validate the results, and report actual evidence.
+
+## 1. Strict Scope and Safety Rules
+
+Evaluate only the existing Similarity Analyzer V2 and its direct integration points.
+
+- Do not implement a new module.
+- Do not redesign or refactor the implementation.
+- Do not modify the trained model, checkpoints, thresholds, temperature calibration, reliability bins, quality reference data, dataset split files, or unrelated modules.
+- Do not retrain the model or recalibrate probabilities.
+- Do not change clinical thresholds or prediction logic to make tests pass.
+- Do not delete existing tests, weaken assertions, skip failing tests, or suppress exceptions to obtain a passing result.
+- Do not fabricate results or mark unexecuted tests as passed.
+- Do not use the final test split for tuning, debugging retrieval parameters, or selecting the best configuration.
+- Use the validation split for retrieval evaluation and keep the test split untouched unless an explicitly approved, separately documented final test evaluation is required.
+- Do not overwrite existing reports. Save new evaluation artifacts in a dedicated directory such as `outputs/similarity_v2/evaluation_audit/`.
+- Before any potentially destructive action, inspect the command and its effects. Prefer read-only evaluation.
+- If a defect is discovered, document it and provide a minimal proposed fix. Do not silently alter the implementation.
+
+The completed evaluation must distinguish **PASS, FAIL, BLOCKED, NOT RUN, and NOT APPLICABLE**.
+
+## 2. Phase A — Repository and Test Discovery
+
+Inspect the complete Similarity Analyzer V2 implementation and its direct dependencies.
+
+Inspect, where present:
+
+- `src/similarity_v2/`
+- Similarity Analyzer V2 tests
+- Existing similarity regression tests
+- Backend routes, request validation, response schemas, and error handling
+- Frontend similarity components and their tests
+- Reference report builder and report validator
+- Embedding index loader and retrieval engine
+- Disease frequency and evidence calculations
+- Manifest and metadata files
+- Build and deployment scripts
+- Existing evaluation reports and test logs
+
+Identify all test files and all testable functions, classes, routes, and user-facing behaviors.
+
+Create a **test inventory** containing:
+- Test ID
+- Component
+- Test description
+- Test type
+- Preconditions
+- Execution command
+- Expected result
+- Actual result
+- Status
+- Evidence location
+
+Do not report comprehensive coverage based only on the number of test files. Map test cases to actual requirements and behaviors.
+
+## 3. Phase B — Reference Library Integrity
+
+Evaluate the generated reference library using the actual artifacts on disk.
+
+Expected artifacts, if applicable:
+
+- `reference_embeddings.npz`
+- `reference_metadata.json`
+- `reference_manifest.json`
+- `disease_frequency.json`
+- `build_report.json`
+- Individual reference JSON reports
+
+Test all of the following:
+
+1. Every manifest entry points to a valid reference record.
+2. Every reference record can be parsed and validated against the expected schema.
+3. Reference IDs are unique and resolve to the correct metadata.
+4. Embedding count equals reference metadata count.
+5. Embedding dimension matches the configured feature dimension, expected to be 1024 if confirmed by the implementation.
+6. Embeddings contain only finite numeric values.
+7. Embedding arrays have the expected dtype and shape.
+8. Embeddings are not unexpectedly all-zero or duplicated.
+9. Metadata and embedding row ordering agree.
+10. No manifest entry is missing, duplicated, or orphaned.
+11. All expected reference reports exist.
+12. All report schema versions are supported.
+13. Required fields are present and correctly typed.
+14. Optional or unavailable fields are explicitly represented as unavailable rather than populated with fabricated values.
+15. Report counts agree across the manifest, metadata, embedding index, and build report.
+16. Disease-frequency counts can be independently recomputed from authentic reference annotations.
+17. The saved manifest accurately describes the artifacts actually present.
+18. Check whether hashes, file sizes, record counts, and model/preprocessing versions are validated by the implementation.
+19. Detect corrupted, truncated, malformed, or incompatible artifacts without crashing unpredictably.
+20. Confirm deterministic behavior when the same build inputs and configuration are used, where determinism is expected.
+
+Report the exact number of records inspected and the IDs of any invalid or inconsistent records. Prefer checking every reference record rather than sampling.
+
+Do not regenerate the library merely to make an integrity test pass.
+
+## 4. Phase C — Authenticity and Reproducibility of Stored Predictions
+
+Independently validate a representative sample of stored reference reports against the existing inference pipeline.
+
+Select cases deterministically across different findings, prediction score ranges, image quality levels, and available uncertainty/OOD states. Record the selection procedure and random seed if applicable.
+
+For each selected case:
+
+1. Load the original image using the established preprocessing pipeline.
+2. Run inference with the existing frozen checkpoint.
+3. Apply the existing calibration and threshold artifacts exactly as the application does.
+4. Compare independently generated predictions with the stored report.
+5. Verify finding order, class mapping, probability range, threshold mapping, predicted labels, and metadata.
+6. Verify that raw and calibrated probabilities are not confused.
+7. Verify that any stored uncertainty or OOD metrics originate from the real implementation.
+8. Check whether unsupported fields are marked unavailable.
+9. Record numerical differences and use documented tolerances appropriate to the inference implementation.
+10. Investigate any mismatch rather than changing tolerances arbitrarily.
+
+Record the checkpoint and configuration fingerprints used during validation.
+
+If the original images or required artifacts are unavailable, mark the affected tests BLOCKED and state exactly why.
+
+## 5. Phase D — Retrieval Algorithm Correctness
+
+Independently test cosine similarity and top-K retrieval.
+
+Test:
+
+- Exact-match retrieval where an identical embedding is available.
+- Orthogonal embeddings.
+- Known synthetic vectors with analytically predictable cosine similarities.
+- Negative cosine similarities, if the implementation permits them.
+- Zero-norm embeddings.
+- NaN and infinity inputs.
+- Incorrect embedding dimensions.
+- Empty reference indexes.
+- Duplicate embeddings.
+- Equal-similarity ties.
+- Very small and very large valid reference indexes.
+- Invalid K values: zero, negative, non-integer, and values greater than the reference count.
+- K values of 5, 10, and 20.
+- Deterministic tie handling.
+- Correct descending similarity order.
+- Correct reference IDs and metadata mapping.
+- No accidental self-retrieval in evaluation when the query also exists in the reference library.
+- No leakage between query and reference partitions.
+- Consistent results between direct Python calls and the API.
+
+Verify that the returned results correspond to the mathematically correct cosine similarity and sorting logic, not merely to plausible-looking scores.
+
+For every defect, include a minimal reproducible test.
+
+## 6. Phase E — Evidence and Disease Statistics
+
+Independently recompute and verify the evidence shown to users.
+
+Check:
+
+1. Dataset prevalence uses the correct denominator and authentic annotations.
+2. Disease-frequency counts and percentages agree with the reference annotations.
+3. Matching rate is computed from the returned cases and actual reference labels.
+4. Similarity-weighted evidence uses the implemented formula and the correct similarity values.
+5. Denominators of zero are handled safely.
+6. Missing labels are not silently treated as confirmed negative findings.
+7. Multiple labels per case are handled correctly.
+8. “0 of 5,” “2 of 5,” and similar values correspond to actual retrieved-case counts.
+9. Percentages agree with their displayed numerator and denominator.
+10. Top-K evidence changes consistently when K changes.
+11. Evidence is based only on the selected retrieved cases.
+12. No retrieval evidence is incorrectly presented as a calibrated patient-specific probability or confirmed diagnosis.
+13. Frontend labels accurately explain the meaning and limitations of each statistic.
+
+Create independent expected-value calculations for a set of synthetic examples with known labels and similarities.
+
+## 7. Phase F — Held-Out Retrieval Evaluation
+
+Use the validation split only for this phase. Confirm the actual split implementation before running.
+
+First determine whether the reference library and validation query set are disjoint. Check image IDs, patient identifiers where available, and any preprocessing or duplicate-image relationships that can be established from the repository.
+
+Run the supported K values: 5, 10, and 20.
+
+Independently compute and report:
+
+- Number of eligible validation queries
+- Number successfully evaluated
+- Number skipped and the reason for each skip category
+- Mean top-match cosine similarity
+- Mean similarity across returned neighbors
+- Primary-finding concordance, with the exact definition
+- Any-finding overlap, with the exact definition
+- Precision@K, with the exact definition
+- Mean latency
+- Median latency
+- P95 latency
+- Maximum latency
+- Error rate
+- Retrieval result consistency
+
+Do not conflate similarity percentage with diagnostic accuracy.
+
+Use consistent timing boundaries, warm-up policy, hardware, batch size, and aggregation methods. Report whether latency includes image loading, embedding extraction, index search, API overhead, or the full request.
+
+**Mandatory metric-consistency audit:** investigate the previous report's K=5 latency values, which listed mean latency as 80.13 ms and P95 latency as 47.61 ms. If these were calculated from the same nonnegative per-query latency samples, the reported mean/P95 relationship is inconsistent and must be explained or corrected in the new report. Do not assume that either value is correct.
+
+Also independently verify all previously reported retrieval metrics rather than copying the earlier report.
+
+If runtime limits prevent a full validation-split evaluation, report the exact number evaluated and clearly label the result partial. Do not present a partial sample as a full-split result.
+
+## 8. Phase G — Data Leakage and Split Isolation
+
+Verify that:
+
+- Reference cases originate only from the intended reference partition.
+- Validation queries do not inadvertently appear in the reference index.
+- Test cases were not used to build the index or select hyperparameters.
+- Split files were not modified.
+- No query receives credit for retrieving itself.
+- Cached embeddings and report artifacts do not bypass split restrictions.
+- Duplicate or overlapping cases are identified where possible.
+- Evaluation scripts use the intended split and do not silently fall back to another split.
+
+Produce a split-isolation report with counts and the exact comparison method.
+
+Do not infer that leakage is absent merely because filenames differ. Use patient IDs or other stable identifiers if available.
+
+## 9. Phase H — Backend API and Security
+
+Test all supported routes and aliases, including the health endpoint, individual case-report endpoint, and analysis endpoint.
+
+Cover:
+
+- Valid JSON requests.
+- Valid multipart/form-data requests, if supported.
+- Valid query parameters.
+- Default K behavior.
+- Supported K values.
+- Invalid K values and types.
+- Missing image.
+- Empty image.
+- Corrupt image.
+- Unsupported file type.
+- Oversized upload.
+- Malformed request body.
+- Missing reference report.
+- Unknown case ID.
+- Missing index or corrupted artifacts.
+- Model-loading failure.
+- Repeated requests.
+- Concurrent requests, if supported.
+- Correct status codes and error response schemas.
+- No raw stack traces or filesystem paths in production responses.
+- Path traversal attempts.
+- URL-encoded traversal attempts.
+- Absolute paths and separator variations.
+- Malformed case identifiers.
+- No arbitrary file reads through the case-report endpoint.
+- No unauthorized access to files outside the intended reference-report directory.
+- No unbounded memory or CPU behavior from invalid inputs.
+
+Use safe test inputs and do not attack external systems.
+
+Verify that `/api/...` and `/api/v1/...` aliases return semantically consistent responses when both are supported.
+
+## 10. Phase I — Deployment Isolation
+
+Simulate deployment with the minimum supported runtime artifacts.
+
+Create an isolated temporary deployment environment without modifying the main working tree. Include only the files the documented deployment procedure requires.
+
+Verify whether inference and retrieval work without:
+
+- Original training images.
+- The full raw dataset CSV.
+- Training and validation split files, unless explicitly required at runtime.
+- Training scripts.
+- Offline library-builder dependencies.
+- Developer-only artifacts.
+
+Preserve the model checkpoint, thresholds, calibration, quality reference, reference embeddings, metadata, manifest, reports, and other files that are genuinely required at runtime.
+
+Do not delete or move original files. Use a temporary copy or isolated environment.
+
+Test missing-artifact behavior and ensure failures are clear, safe, and actionable.
+
+Report the exact minimum runtime artifact set and any unexpected dependency on offline or development files.
+
+## 11. Phase J — Frontend and User-Visible Behavior
+
+Run the existing frontend test suite and production build.
+
+Verify:
+
+- Top-K selection supports only valid options.
+- Changing K triggers the correct request and updates the results.
+- Loading, success, empty, and error states render correctly.
+- Similarity scores and percentages are formatted consistently.
+- Retrieved case IDs correspond to backend records.
+- Report inspector opens the correct case.
+- Report fields match the API response.
+- Missing or unavailable metrics are displayed honestly.
+- Long labels and missing annotations do not break layout.
+- Dialog accessibility, keyboard behavior, and close behavior work.
+- Network errors and malformed responses are handled.
+- No fabricated placeholder values are presented as real results.
+- Clinical disclaimers remain visible where required.
+- The interface does not describe similar cases as proof of diagnosis.
+- No unrelated pages or completed modules regress.
+
+Use automated browser tests if the repository supports them. Otherwise, document the manual checks that remain necessary.
+
+## 12. Phase K — Regression and Protected Artifact Verification
+
+Run all relevant existing tests without deleting or weakening them.
+
+At minimum, discover and run:
+
+- Similarity Analyzer V2 tests.
+- Legacy similarity regression tests that are still applicable.
+- Backend API tests.
+- Security tests.
+- Frontend unit/component tests.
+- Frontend production build.
+- Relevant inference and preprocessing regression tests.
+
+Compare the actual outputs with the previous reported results. Do not claim that a suite passed unless its command actually completed successfully.
+
+Before and after evaluation, calculate SHA-256 hashes for protected artifacts, including where present:
+
+- `checkpoints/best_model.pt`
+- `outputs/evaluation/thresholds.json`
+- `outputs/calibration/temperature.json`
+- Reliability-bin artifacts
+- Image-quality reference artifacts
+- Training, validation, and test split files
+
+Compare against hashes recorded at the start of this evaluation, not only against values copied from a previous report.
+
+If any protected artifact changes, stop and report it. Do not attempt to restore or overwrite it automatically.
+
+## 13. Phase L — Previously Reported Example Audit
+
+Reproduce the previous report's example query, `00000001_000.png`, if that image and required runtime artifacts are available.
+
+Verify:
+
+- Actual checkpoint and preprocessing configuration.
+- Raw and calibrated prediction values.
+- Relevant threshold values.
+- Primary predicted finding.
+- Top-K retrieved case IDs.
+- Similarity values and their ordering.
+- Reference labels for each retrieved case.
+- Numerators and denominators used for the evidence percentages.
+
+The earlier report listed Cardiomegaly at 93.45% with a 50% threshold, while prior project output showed different values for Cardiomegaly in a related report. Determine whether the difference is explained by model/checkpoint/configuration, different processing, or a genuine inconsistency.
+
+Do not change the threshold or prediction output to force agreement. If the source artifacts cannot establish the cause, label it unresolved.
+
+## 14. Phase M — Test Coverage and Failure Analysis
+
+Measure coverage for the V2 package if the installed tooling supports it.
+
+Report:
+
+- Line coverage.
+- Branch coverage.
+- Coverage for critical retrieval, evidence, validation, and API paths.
+- Untested critical branches.
+- Tests that pass without meaningfully verifying their intended behavior.
+- Tests that are flaky or dependent on execution order.
+- Tests that silently skip because of missing dependencies or artifacts.
+- Warnings that could indicate compatibility or numerical issues.
+
+Do not invent a coverage percentage when coverage tooling has not been run.
+
+Prioritize findings by severity:
+
+- **P0 — Critical:** data leakage, unauthorized file access, corrupted predictions, or severe safety failure.
+- **P1 — High:** incorrect evidence, wrong reference mapping, broken primary workflow, or untrustworthy evaluation.
+- **P2 — Medium:** inconsistent edge-case behavior, significant performance issues, or incomplete error handling.
+- **P3 — Low:** minor usability, documentation, or noncritical maintainability issues.
+
+For each finding, include the affected file/function, reproduction command, observed result, expected result, severity, and recommended minimal correction.
+
+## 15. Required Deliverables
+
+Write a new, reproducible evaluation package under:
+
+`outputs/similarity_v2/evaluation_audit/`
+
+Include, where applicable:
+
+1. `evaluation_summary.json`
+2. `test_inventory.csv`
+3. `reference_integrity_report.json`
+4. `prediction_reproducibility_report.json`
+5. `retrieval_correctness_report.json`
+6. `retrieval_metrics_validation.json`
+7. `split_isolation_report.json`
+8. `api_security_report.json`
+9. `deployment_isolation_report.json`
+10. `frontend_regression_report.json`
+11. `protected_artifact_hashes_before.json`
+12. `protected_artifact_hashes_after.json`
+13. `coverage_report.json`
+14. `findings.md`
+15. `evaluation_execution.log`
+
+Every generated report must state the timestamp, command, configuration, input artifacts, execution status, and limitations as applicable.
+
+Never place patient-identifiable information or unnecessary raw medical data in the reports.
+
+## 16. Final Verdict Rules
+
+The final verdict must be one of:
+
+- **PASS:** All critical requirements were tested and passed, with no unresolved P0/P1 findings.
+- **PASS WITH LIMITATIONS:** Critical requirements passed, but clearly documented noncritical tests remain blocked or incomplete.
+- **FAIL:** A critical test failed, a material inconsistency remains unresolved, or a P0/P1 issue exists.
+- **INCONCLUSIVE:** Required artifacts or execution capabilities are unavailable, preventing a defensible verdict.
+
+A previous successful test run is not a substitute for the current execution.
+
+Do not label the module “100% verified” or “guaranteed correct.” State exactly what was tested and what remains unverified.
+
+## 17. Execution Instructions
+
+Start with repository inspection and a protected-artifact hash snapshot. Then execute the evaluation in phases, recording results as you go.
+
+If a phase fails, preserve its logs and continue with independent phases when safe. Do not hide earlier failures behind a final passing summary.
+
+At completion, provide a concise but evidence-backed report containing:
+
+1. Final verdict.
+2. Number of tests discovered, executed, passed, failed, blocked, and not run.
+3. Reference library integrity counts.
+4. Prediction reproducibility results.
+5. Independently verified retrieval metrics for K=5, 10, and 20.
+6. Resolution status of the latency inconsistency.
+7. Data-leakage findings.
+8. API and security results.
+9. Deployment-isolation results.
+10. Frontend test/build results.
+11. Protected artifact hash comparison.
+12. Coverage results.
+13. P0/P1/P2/P3 findings.
+14. Exact commands used.
+15. Remaining limitations and the next minimal corrective action, if needed.
+
+**Begin evaluation now. Inspect first, execute actual tests second, and write the final verdict only after analyzing the collected evidence. Do not implement fixes during this evaluation run.**
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-20T12:44:29+05:30.
+
+The user's current state is as follows:
+Active Document: d:\DYP\Final Year\Sem 7\Project\MedTrust\backend\server.py (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 771
+</ADDITIONAL_METADATA>

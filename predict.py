@@ -12,6 +12,9 @@ from src.transformer import test_transform
 from src.explainability.gradcam import GradCAM
 from src.explainability.reliability import ExplanationReliabilityAnalyzer
 from src.calibration.calibration_analyzer import CalibrationAnalyzer
+from src.OOD.predict import predict_all_methods
+from src.uncertainty import MCDropoutPredictor, UncertaintyAnalyzer
+from src.quality import WeightedImageQualityAnalyzer, print_quality_report
 
 
 CHECKPOINT_PATH = Path("checkpoints/best_model.pt")
@@ -581,6 +584,66 @@ def print_calibration_analysis(calibration_result):
         )
 
 
+def print_ood_results(ood_res):
+    """Print Module 7 Out-of-Distribution (OOD) detection results."""
+    print()
+    print("Individual Detector Results")
+    print("-" * 78)
+    for method, item in ood_res["method_results"].items():
+        print(
+            f"{method:<16}"
+            f"Score: {item['score']:>12.6f}  "
+            f"Threshold: {item['threshold']:>12.6f}  "
+            f"Status: {item['status']}"
+        )
+    print("-" * 78)
+    print("Combined policy  : OOD if ANY detector flags OOD")
+    print(f"Status          : {ood_res['status']}")
+    print(f"Trust Decision  : {ood_res['trust_decision']}")
+
+
+def print_uncertainty_results(result, passes, dropout_rate):
+    """Print Module 6 Prediction Uncertainty (MC-Dropout) analysis."""
+    print()
+    print("=" * 112)
+    print("MODULE 6 — PREDICTION UNCERTAINTY (MC-DROPOUT)")
+    print("=" * 112)
+    print(f"MC-Dropout passes   : {passes}")
+    print(f"Feature dropout rate: {dropout_rate:.2f}")
+    print()
+    print(
+        f"{'Disease':<24}"
+        f"{'Mean Prob.':>14}"
+        f"{'Variance':>14}"
+        f"{'Std Dev':>14}"
+        f"{'Entropy':>14}"
+    )
+    print("-" * 112)
+
+    for item in result["diseases"]:
+        print(
+            f"{item.disease:<24}"
+            f"{item.probability:>14.4f}"
+            f"{item.variance:>14.6f}"
+            f"{item.standard_deviation:>14.4f}"
+            f"{item.entropy:>14.4f}"
+        )
+
+    print("-" * 112)
+    print(
+        f"Overall mean variance  : {result['overall_mean_variance']:.6f}"
+    )
+    print(
+        f"Overall max variance   : {result['overall_max_variance']:.6f}"
+    )
+    print(
+        f"Most uncertain disease : {result['most_uncertain_disease']}"
+    )
+    print(
+        f"Highest uncertainty    : {result['most_uncertain_variance']:.6f}"
+    )
+
+
 def print_gradcam_and_reliability_result(
     class_index,
     cam,
@@ -682,7 +745,10 @@ def print_final_notes():
         "Module 9                       : diagnostic lookup only; no model modification"
     )
     print(
-        "Module 6                       : explanation stability/fidelity diagnostic only"
+        "Module 6 (Uncertainty)         : MC-Dropout epistemic variability diagnostic only"
+    )
+    print(
+        "Explanation Reliability        : perturbation stability/fidelity diagnostic only"
     )
     print()
     print(
@@ -700,6 +766,48 @@ def print_final_notes():
     print(
         "This research model output must not be interpreted as a clinical diagnosis."
     )
+    print("=" * 112)
+
+
+def print_similarity_results(result: Dict[str, Any]) -> None:
+    print()
+    print("=" * 112)
+    print("MODULE 8: CASE-BASED SIMILARITY ANALYSIS (DenseNet-121 1024-d Cosine Proximity)")
+    print("=" * 112)
+    print(f"Total reference cases indexed : {result['total_references']}")
+    print(f"Top-K retrieved               : {result['top_k']}")
+    if "primary_concordance_rate" in result:
+        print(f"Primary Concordance (C_d)     : {result['primary_concordance_rate']:.1f}% ({result.get('primary_concordant_count', 0)} of {result['top_k']} cases)")
+    if "any_finding_overlap_rate" in result:
+        print(f"Any-Finding Overlap (O)       : {result['any_finding_overlap_rate']:.1f}% ({result.get('any_finding_overlap_count', 0)} of {result['top_k']} cases)")
+    if "concordance_summary" in result and result["concordance_summary"]:
+        print(f"Assessment Summary            : {result['concordance_summary']}")
+    print("-" * 112)
+    print(f"{'Rank':<6} {'Reference Case':<22} {'Score':<10} {'Dataset Finding(s)':<30} {'Concordance Status'}")
+    print("-" * 112)
+    for match in result.get("matches", []):
+        meta = match.get("metadata", {}) or {}
+        findings_str = meta.get("finding_labels", "N/A")
+        conc = match.get("concordance", {}) or {}
+        conc_label = conc.get("label", conc.get("status", "N/A"))
+        print(
+            f"#{match['rank']:<5} {match['filename']:<22} {match['similarity_score']:>6.2f}%   "
+            f"{findings_str:<30} {conc_label}"
+        )
+    print("-" * 112)
+    # Print Top Retrieved Label Support vs Global Dataset Prevalence
+    weighted_support = result.get("weighted_label_support", [])
+    if weighted_support:
+        active_support = [s for s in weighted_support if s["retrieved_count"] > 0][:5]
+        if active_support:
+            print("Top-K Retrieved Disease Label Support (vs Global NIH Dataset Prevalence):")
+            print(f"{'Disease Class':<24} {'Weighted Support':>18} {'Retrieved Count':>16} {'Dataset Prevalence':>20}")
+            print("-" * 112)
+            for s in active_support:
+                prev_str = f"{s['dataset_prevalence']:.2f}%" if s.get('dataset_prevalence') is not None else "N/A"
+                print(f"{s['disease']:<24} {s['weighted_support']:>17.2f}% {s['retrieved_count']:>11} of {s['top_k']} {prev_str:>20}")
+            print("-" * 112)
+    print(f"Notice: {result.get('disclaimer', '')}")
     print("=" * 112)
 
 
@@ -749,10 +857,43 @@ def main():
     )
 
     parser.add_argument(
+        "--mc-passes",
+        type=int,
+        default=30,
+        help="Number of stochastic MC-Dropout passes for uncertainty (default: 30).",
+    )
+
+    parser.add_argument(
+        "--mc-dropout-rate",
+        type=float,
+        default=0.20,
+        help="Feature dropout rate for MC-Dropout (default: 0.20).",
+    )
+
+    parser.add_argument(
+        "--skip-uncertainty",
+        action="store_true",
+        help="Skip MC-Dropout prediction uncertainty estimation.",
+    )
+
+    parser.add_argument(
         "--gradcam-output-dir",
         type=str,
         default=str(GRADCAM_OUTPUT_DIR),
         help="Directory for Grad-CAM visualization PNG files.",
+    )
+
+    parser.add_argument(
+        "--top-k-similar",
+        type=int,
+        default=5,
+        help="Number of similar reference cases to retrieve (default: 5).",
+    )
+
+    parser.add_argument(
+        "--skip-similarity",
+        action="store_true",
+        help="Skip Module 8 case-based similarity retrieval.",
     )
 
     args = parser.parse_args()
@@ -807,6 +948,15 @@ def main():
     print(f"Input shape : {tuple(image_tensor.shape)}")
 
     # -----------------------------------------------------
+    # Module 5: Technical Image Quality Analysis
+    # -----------------------------------------------------
+
+    quality_analyzer = WeightedImageQualityAnalyzer()
+    quality_result = quality_analyzer.analyze(image)
+    print()
+    print_quality_report(quality_result, detailed=True)
+
+    # -----------------------------------------------------
     # Modules 3 + 4: prediction + frozen calibration
     # -----------------------------------------------------
 
@@ -857,6 +1007,48 @@ def main():
     print_calibration_analysis(
         calibration_result
     )
+
+    # -----------------------------------------------------
+    # Module 7: Out-of-Distribution (OOD) Detection
+    # -----------------------------------------------------
+
+    with torch.inference_mode():
+        features_map = model.features(image_tensor)
+        features_map = torch.nn.functional.relu(features_map, inplace=False)
+        pooled = torch.nn.functional.adaptive_avg_pool2d(features_map, (1, 1))
+        extracted_features = torch.flatten(pooled, 1)
+
+    ood_res = predict_all_methods(
+        logits=logits.detach().cpu().numpy(),
+        features=extracted_features.detach().cpu().numpy(),
+    )
+    print_ood_results(ood_res)
+
+    # -----------------------------------------------------
+    # Module 6: Prediction Uncertainty (MC-Dropout)
+    # -----------------------------------------------------
+
+    if not args.skip_uncertainty:
+        uncertainty_predictor = MCDropoutPredictor(
+            model=model,
+            passes=args.mc_passes,
+            dropout_rate=args.mc_dropout_rate,
+            device=device,
+        )
+        mc_result = uncertainty_predictor.predict(image_tensor)
+        mc_samples = (
+            mc_result.probabilities[:, 0, :]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+        uncertainty_analyzer = UncertaintyAnalyzer(CLASSES)
+        uncertainty_result = uncertainty_analyzer.analyze(mc_samples)
+        print_uncertainty_results(
+            uncertainty_result,
+            passes=args.mc_passes,
+            dropout_rate=args.mc_dropout_rate,
+        )
 
     # -----------------------------------------------------
     # Modules 5 + 6: selected explanation target(s)
@@ -940,6 +1132,30 @@ def main():
             gradcam_output_path=gradcam_output_path,
             reliability_result=reliability_result,
         )
+
+    # -----------------------------------------------------
+    # Module 8: Case-Based Similarity Analysis
+    # -----------------------------------------------------
+
+    if not args.skip_similarity:
+        try:
+            from src.similarity import SimilarityAnalyzer
+
+            primary_idx = int(np.argmax(raw_scores))
+            primary_disease = CLASSES[primary_idx]
+            detected_findings = [CLASSES[i] for i in range(len(CLASSES)) if predictions[i] == 1]
+
+            similarity_analyzer = SimilarityAnalyzer(model=model, device=device)
+            sim_result = similarity_analyzer.find_similar_cases(
+                image,
+                top_k=args.top_k_similar,
+                query_findings=detected_findings,
+                primary_finding=primary_disease,
+                exclude_filenames=[Path(args.image).name],
+            )
+            print_similarity_results(sim_result)
+        except Exception as e:
+            print(f"\n[!] Similarity analysis skipped: {e}")
 
     # -----------------------------------------------------
     # Final interpretation / audit note

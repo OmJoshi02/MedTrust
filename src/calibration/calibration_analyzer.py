@@ -59,9 +59,15 @@ class CalibrationAnalyzer:
         self.warning_threshold = float(warning_threshold)
         self.high_discrepancy_threshold = float(high_discrepancy_threshold)
 
-        self.bins_csv_path = (
-            Path(bins_csv_path) if bins_csv_path is not None else self.DEFAULT_BINS_PATH
-        )
+        if bins_csv_path is not None:
+            self.bins_csv_path = Path(bins_csv_path)
+        else:
+            self.bins_csv_path = self.DEFAULT_BINS_PATH
+            if not self.bins_csv_path.exists():
+                repo_root = Path(__file__).resolve().parents[2]
+                alt = repo_root / self.DEFAULT_BINS_PATH
+                if alt.exists():
+                    self.bins_csv_path = alt
 
         self._bins_by_disease = {}
         self._load_and_validate_bins()

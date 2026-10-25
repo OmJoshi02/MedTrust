@@ -1,0 +1,23 @@
+filename,image_index,finding_labels,patient_age,patient_gender,view_position,dataset_source,annotation_type
+00000002_000.png,00000002_000.png,No Finding,80,M,PA,NIH ChestX-ray14,Dataset Annotation
+00000003_001.png,00000003_001.png,Hernia,74,F,PA,NIH ChestX-ray14,Dataset Annotation
+00000004_000.png,00000004_000.png,Mass|Nodule,82,M,AP,NIH ChestX-ray14,Dataset Annotation
+00000005_006.png,00000005_006.png,Infiltration,70,F,PA,NIH ChestX-ray14,Dataset Annotation
+00000005_007.png,00000005_007.png,Effusion|Infiltration,70,F,PA,NIH ChestX-ray14,Dataset Annotation
+00000008_000.png,00000008_000.png,Cardiomegaly,68,F,PA,NIH ChestX-ray14,Dataset Annotation
+00000013_010.png,00000013_010.png,Effusion|Pneumonia|Pneumothorax,60,M,AP,NIH ChestX-ray14,Dataset Annotation
+00000013_023.png,00000013_023.png,Infiltration|Mass|Pneumothorax,56,M,AP,NIH ChestX-ray14,Dataset Annotation
+00000013_026.png,00000013_026.png,Cardiomegaly|Emphysema,56,M,AP,NIH ChestX-ray14,Dataset Annotation
+00000013_030.png,00000013_030.png,Atelectasis|Cardiomegaly|Emphysema|Mass|Pneumothorax,56,M,AP,NIH ChestX-ray14,Dataset Annotation
+00000013_033.png,00000013_033.png,Pneumothorax,56,M,PA,NIH ChestX-ray14,Dataset Annotation
+00000013_043.png,00000013_043.png,Mass|Pleural_Thickening,56,M,PA,NIH ChestX-ray14,Dataset Annotation
+00000020_001.png,00000020_001.png,Fibrosis|Infiltration,47,M,PA,NIH ChestX-ray14,Dataset Annotation
+00000030_000.png,00000030_000.png,Atelectasis,74,M,PA,NIH ChestX-ray14,Dataset Annotation
+00000032_001.png,00000032_001.png,Cardiomegaly|Edema|Effusion,54,F,AP,NIH ChestX-ray14,Dataset Annotation
+00000032_012.png,00000032_012.png,Atelectasis|Consolidation|Edema|Pneumonia,54,F,AP,NIH ChestX-ray14,Dataset Annotation
+00000165_001.png,00000165_001.png,Pneumonia,76,M,PA,NIH ChestX-ray14,Dataset Annotation
+xray001.jpg,DEMO-xray001.jpg,Cardiomegaly|Effusion,58,M,PA,Synthetic Benchmark Demonstration,Demonstration Benchmark Label
+xray002.jpg,DEMO-xray002.jpg,Pneumonia|Infiltration,45,F,PA,Synthetic Benchmark Demonstration,Demonstration Benchmark Label
+xray003.jpg,DEMO-xray003.jpg,Pneumothorax,31,M,PA,Synthetic Benchmark Demonstration,Demonstration Benchmark Label
+xray004.jpg,DEMO-xray004.jpg,Nodule|Mass,62,F,PA,Synthetic Benchmark Demonstration,Demonstration Benchmark Label
+xray005.jpg,DEMO-xray005.jpg,Atelectasis,67,M,PA,Synthetic Benchmark Demonstration,Demonstration Benchmark Label
