@@ -1,0 +1,69 @@
+<USER_REQUEST>
+# MedTrust — Similarity Analyzer V2: Comprehensive Independent Evaluation & Test Audit
+
+## Role
+
+Act as a senior ML validation engineer, Python test engineer, backend API auditor, frontend QA engineer, and medical AI evaluation specialist.
+
+Your task is to **independently evaluate every testable component of the completed Similarity Analyzer V2**, verify the previous implementation report against actual code and execution results, and produce a reproducible evaluation report.
+
+Do not assume the previous report is correct merely because it claims all tests passed. Inspect the repository, execute the available tests, independently validate the results, and report actual evidence.
+
+## 1. Strict Scope and Safety Rules
+
+Evaluate only the existing Similarity Analyzer V2 and its direct integration points.
+
+- Do not implement a new module.
+- Do not redesign or refactor the implementation.
+- Do not modify the trained model, checkpoints, thresholds, temperature calibration, reliability bins, quality reference data, dataset split files, or unrelated modules.
+- Do not retrain the model or recalibrate probabilities.
+- Do not change clinical thresholds or prediction logic to make tests pass.
+- Do not delete existing tests, weaken assertions, skip failing tests, or suppress exceptions to obtain a passing result.
+- Do not fabricate results or mark unexecuted tests as passed.
+- Do not use the final test split for tuning, debugging retrieval parameters, or selecting the best configuration.
+- Use the validation split for retrieval evaluation and keep the test split untouched unless an explicitly approved, separately documented final test evaluation is required.
+- Do not overwrite existing reports. Save new evaluation artifacts in a dedicated directory such as `outputs/similarity_v2/evaluation_audit/`.
+- Before any potentially destructive action, inspect the command and its effects. Prefer read-only evaluation.
+- If a defect is discovered, document it and provide a minimal proposed fix. Do n
+<truncated 18084 bytes>
+LIMITATIONS:** Critical requirements passed, but clearly documented noncritical tests remain blocked or incomplete.
+- **FAIL:** A critical test failed, a material inconsistency remains unresolved, or a P0/P1 issue exists.
+- **INCONCLUSIVE:** Required artifacts or execution capabilities are unavailable, preventing a defensible verdict.
+
+A previous successful test run is not a substitute for the current execution.
+
+Do not label the module “100% verified” or “guaranteed correct.” State exactly what was tested and what remains unverified.
+
+## 17. Execution Instructions
+
+Start with repository inspection and a protected-artifact hash snapshot. Then execute the evaluation in phases, recording results as you go.
+
+If a phase fails, preserve its logs and continue with independent phases when safe. Do not hide earlier failures behind a final passing summary.
+
+At completion, provide a concise but evidence-backed report containing:
+
+1. Final verdict.
+2. Number of tests discovered, executed, passed, failed, blocked, and not run.
+3. Reference library integrity counts.
+4. Prediction reproducibility results.
+5. Independently verified retrieval metrics for K=5, 10, and 20.
+6. Resolution status of the latency inconsistency.
+7. Data-leakage findings.
+8. API and security results.
+9. Deployment-isolation results.
+10. Frontend test/build results.
+11. Protected artifact hash comparison.
+12. Coverage results.
+13. P0/P1/P2/P3 findings.
+14. Exact commands used.
+15. Remaining limitations and the next minimal corrective action, if needed.
+
+**Begin evaluation now. Inspect first, execute actual tests second, and write the final verdict only after analyzing the collected evidence. Do not implement fixes during this evaluation run.**
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-20T12:44:29+05:30.
+
+The user's current state is as follows:
+Active Document: d:\DYP\Final Year\Sem 7\Project\MedTrust\backend\server.py (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 771
+</ADDITIONAL_METADATA>

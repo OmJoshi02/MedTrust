@@ -1,0 +1,31 @@
+services:
+  medtrust:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medtrust-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - MEDTRUST_ENV=production
+      - MEDTRUST_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000
+      - MEDTRUST_MAX_UPLOAD_BYTES=15728640
+      - MEDTRUST_SECURE_COOKIES=0
+      - SEED_DEV_INVESTIGATOR=0
+    volumes:
+      - medtrust-data:/app/backend
+      - ./checkpoints:/app/checkpoints:ro
+      - ./outputs:/app/outputs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  medtrust-data:
+    name: medtrust-sqlite-storage
+
